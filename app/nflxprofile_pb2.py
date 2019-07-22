@@ -19,7 +19,7 @@ DESCRIPTOR = _descriptor.FileDescriptor(
   package='nflxprofile',
   syntax='proto2',
   serialized_options=None,
-  serialized_pb=_b('\n\x11nflxprofile.proto\x12\x0bnflxprofile\"\xe8\x03\n\x07Profile\x12\x12\n\nstart_time\x18\x01 \x02(\x01\x12\x10\n\x08\x65nd_time\x18\x02 \x02(\x01\x12\x13\n\x07samples\x18\x03 \x03(\rB\x02\x10\x01\x12\x17\n\x0btime_deltas\x18\x04 \x03(\x01\x42\x02\x10\x01\x12.\n\x05nodes\x18\x05 \x03(\x0b\x32\x1f.nflxprofile.Profile.NodesEntry\x12\r\n\x05title\x18\x06 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x07 \x01(\t\x12\x30\n\x06params\x18\x08 \x03(\x0b\x32 .nflxprofile.Profile.ParamsEntry\x1a\x8a\x01\n\x04Node\x12\x15\n\rfunction_name\x18\x01 \x02(\t\x12\x11\n\thit_count\x18\x02 \x02(\r\x12\x10\n\x08\x63hildren\x18\x03 \x03(\r\x12\x0f\n\x07libtype\x18\x04 \x01(\t\x12\x0e\n\x06parent\x18\x05 \x01(\r\x12\x0b\n\x03pid\x18\x06 \x01(\r\x12\x0b\n\x03tid\x18\x07 \x01(\r\x12\x0b\n\x03\x63pu\x18\x08 \x01(\r\x1aG\n\nNodesEntry\x12\x0b\n\x03key\x18\x01 \x01(\r\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.nflxprofile.Profile.Node:\x02\x38\x01\x1a-\n\x0bParamsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01')
+  serialized_pb=_b('\n\x11nflxprofile.proto\x12\x0bnflxprofile\"\xf7\x03\n\x07Profile\x12\x12\n\nstart_time\x18\x01 \x02(\x01\x12\x10\n\x08\x65nd_time\x18\x02 \x02(\x01\x12\x13\n\x07samples\x18\x03 \x03(\rB\x02\x10\x01\x12\x17\n\x0btime_deltas\x18\x04 \x03(\x01\x42\x02\x10\x01\x12.\n\x05nodes\x18\x05 \x03(\x0b\x32\x1f.nflxprofile.Profile.NodesEntry\x12\r\n\x05title\x18\x06 \x01(\t\x12\x13\n\x0b\x64\x65scription\x18\x07 \x01(\t\x12\x30\n\x06params\x18\x08 \x03(\x0b\x32 .nflxprofile.Profile.ParamsEntry\x1a\x99\x01\n\x04Node\x12\x15\n\rfunction_name\x18\x01 \x02(\t\x12\x11\n\thit_count\x18\x02 \x02(\r\x12\x10\n\x08\x63hildren\x18\x03 \x03(\r\x12\x0f\n\x07libtype\x18\x04 \x01(\t\x12\x0e\n\x06parent\x18\x05 \x01(\r\x12\x0b\n\x03pid\x18\x06 \x01(\r\x12\x0b\n\x03tid\x18\x07 \x01(\r\x12\x0b\n\x03\x63pu\x18\x08 \x01(\r\x12\r\n\x05value\x18\t \x01(\x04\x1aG\n\nNodesEntry\x12\x0b\n\x03key\x18\x01 \x01(\r\x12(\n\x05value\x18\x02 \x01(\x0b\x32\x19.nflxprofile.Profile.Node:\x02\x38\x01\x1a-\n\x0bParamsEntry\x12\x0b\n\x03key\x18\x01 \x01(\t\x12\r\n\x05value\x18\x02 \x01(\t:\x02\x38\x01')
 )
 
 
@@ -88,6 +88,13 @@ _PROFILE_NODE = _descriptor.Descriptor(
       message_type=None, enum_type=None, containing_type=None,
       is_extension=False, extension_scope=None,
       serialized_options=None, file=DESCRIPTOR),
+    _descriptor.FieldDescriptor(
+      name='value', full_name='nflxprofile.Profile.Node.value', index=8,
+      number=9, type=4, cpp_type=4, label=1,
+      has_default_value=False, default_value=0,
+      message_type=None, enum_type=None, containing_type=None,
+      is_extension=False, extension_scope=None,
+      serialized_options=None, file=DESCRIPTOR),
   ],
   extensions=[
   ],
@@ -101,7 +108,7 @@ _PROFILE_NODE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=265,
-  serialized_end=403,
+  serialized_end=418,
 )
 
 _PROFILE_NODESENTRY = _descriptor.Descriptor(
@@ -137,8 +144,8 @@ _PROFILE_NODESENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=405,
-  serialized_end=476,
+  serialized_start=420,
+  serialized_end=491,
 )
 
 _PROFILE_PARAMSENTRY = _descriptor.Descriptor(
@@ -174,8 +181,8 @@ _PROFILE_PARAMSENTRY = _descriptor.Descriptor(
   extension_ranges=[],
   oneofs=[
   ],
-  serialized_start=478,
-  serialized_end=523,
+  serialized_start=493,
+  serialized_end=538,
 )
 
 _PROFILE = _descriptor.Descriptor(
@@ -254,7 +261,7 @@ _PROFILE = _descriptor.Descriptor(
   oneofs=[
   ],
   serialized_start=35,
-  serialized_end=523,
+  serialized_end=538,
 )
 
 _PROFILE_NODE.containing_type = _PROFILE
