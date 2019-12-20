@@ -18,14 +18,15 @@
 
 import React, { Component } from 'react'
 import PropTypes from 'prop-types'
-import { Dimmer, Loader, Divider, Container, Button, Input, Dropdown, Grid, Checkbox, Icon } from 'semantic-ui-react'
+import { Dimmer, Loader, Divider, Container, Button, Input, Dropdown, Grid, Checkbox, Icon, Modal, Form } from 'semantic-ui-react'
 import { connect } from 'react-redux'
 import { flamegraph } from 'd3-flame-graph'
+import { nodeJsColorMapper } from 'd3-flame-graph/dist/d3-flamegraph-colorMapper'
 import { select } from 'd3-selection'
 import 'd3-flame-graph/dist/d3-flamegraph.css'
 import './flamegraph.less'
 import queryString from 'query-string'
-import { layout } from '../../config.jsx'
+import { layout, flameGraphFlavor } from '../../config.jsx'
 import checkStatus from '../../common/CheckStatus'
 
 const styles = {
@@ -37,7 +38,7 @@ const styles = {
         fontWeight: 300,
         minHeight: '5em',
     },
-    layoutDropdown: {
+    optionsDropdown: {
         marginRight: 3.25,
     },
     packageNameToggle: {
@@ -48,7 +49,7 @@ const styles = {
 class FlameGraph extends Component {
     constructor(props) {
         super(props);
-    
+
         [
             'drawFlamegraph',
             'executeQuery',
@@ -59,6 +60,7 @@ class FlameGraph extends Component {
             'handleOnKeyDown',
             'updateSearchQuery',
             'handleLayoutChange',
+            'handleFlavorChange',
             'handleBackClick',
             'handlePackageNameClick',
             'handleCompareClick',
@@ -73,24 +75,33 @@ class FlameGraph extends Component {
                 return localStorage.getItem('layout');
             } else return layout.flame;
         }
-    
+
         this.state = {
           data: {},
           loading: false,
           chart: null,
           searchTerm: '',
           layout: preferredLayout(),
+          flavor: flameGraphFlavor.standard,
           packageName: false,
         };
     }
 
     componentDidMount() {
-        this.executeQuery()
+        const values = queryString.parse(this.props.location.search)
+
+        if (values) {
+            this.setState(values, () => {
+                this.executeQuery()
+            })
+        } else {
+            this.executeQuery()
+        }
     }
 
     componentDidUpdate(prevProps) {
         if (
-            this.props.location.search !== prevProps.location.search || 
+            this.props.location.search !== prevProps.location.search ||
             this.props.match.params !== prevProps.match.params ||
             this.props.compare !== prevProps.compare
         ) {
@@ -102,9 +113,9 @@ class FlameGraph extends Component {
     executeQuery() {
         const { type, filename, start, end, compareType, compareFilename, compareStart, compareEnd } = this.props.match.params
         const { compare } = this.props
-        const { packageName } = this.state
+        const { packageName, flavor } = this.state
 
-        let url = `/flamegraph/?filename=${filename}&type=${type}&packageName=${packageName ? 'true' : 'false'}`
+        let url = `/flamegraph/?filename=${filename}&type=${type}&packageName=${packageName ? 'true' : 'false'}&flavor=${flavor}`
 
         if (compare == 'differential') {
             url = `/differential/?filename=${filename}&type=${type}&compareFilename=${compareFilename}&compareType=${compareType}`
@@ -142,7 +153,7 @@ class FlameGraph extends Component {
                 } else {
                     this.setState({searchTerm: ''});
                     this.state.chart.clear()
-                }    
+                }
             })
             .catch((error) => {
                 error.response.json()
@@ -155,18 +166,35 @@ class FlameGraph extends Component {
             })
     }
 
+    getColorMapperFunction() {
+      const { flavor } = this.state
+      if (flavor === flameGraphFlavor.nodejs) {
+        return nodeJsColorMapper
+      }
+      return (d, color) => color
+    }
+
+
     drawFlamegraph() {
         const { data } = this.state
         const { compare } = this.props
         const width = document.getElementById('flamegraph').offsetWidth
 
         const cellHeight = 16
+
+        select('#flamegraph').selectAll('svg').remove()
+
         const chart = flamegraph()
             .width(width)
             .cellHeight(cellHeight)
             .transitionDuration(750)
-            .sort(true)
+            .sort((lhs, rhs) => {
+      if (lhs.value == rhs.value) return 0
+      if (lhs.value < rhs.value) return 1
+      return -1
+    })
             .title('')
+            .setColorMapper(this.getColorMapperFunction())
             .differential(compare === 'differential' ? true : false)
             .minFrameSize(5)
             .inverted(this.state.layout === layout.icicle)
@@ -183,9 +211,9 @@ class FlameGraph extends Component {
     }
 
     handlePackageNameClick() {
-        this.setState({packageName: !this.state.packageName}, () => {
-            this.executeQuery()
-        })
+        const value = {packageName: !this.state.packageName};
+        this.props.history.push(value);
+        this.setState(value);
     }
 
     handleResetClick() {
@@ -221,12 +249,12 @@ class FlameGraph extends Component {
     }
 
     handleLayoutChange(event, data) {
-        this.setState({layout: data.value}, () => {
-            this.state.chart
-                .inverted(this.state.layout === layout.icicle)
-                .resetZoom()
-            localStorage.setItem('layout', this.state.layout)
-        })
+        this.setState({layout: data.value})
+    }
+
+    handleFlavorChange(event, data) {
+
+        this.setState({flavor: data.value})
     }
 
     handleBackClick() {
@@ -257,10 +285,23 @@ class FlameGraph extends Component {
         if (start && end) {
             url += `/${start}/${end}`
         }
-        
+
         this.props.history.push(url)
     }
 
+    handleSettingsOpen = () => {
+        this.setState({settingsOpen: true})
+    }
+
+    handleSettingsClose = () => {
+        this.setState({settingsOpen: false})
+    }
+
+    handleApply = () => {
+        this.setState({settingsOpen: false}, () => {
+            this.executeQuery()
+        })
+    }
 
     handleElidedDifferentialFlipClick() {
         const { type, filename, start, end, compareType, compareFilename, compareStart, compareEnd } = this.props.match.params
@@ -274,13 +315,13 @@ class FlameGraph extends Component {
         if (compareStart && compareEnd) {
             url += `/${compareStart}/${compareEnd}`
         }
-        
+
         this.props.history.push(url)
     }
 
     render() {
         const { type } = this.props.match.params
-        const searchButton = 
+        const searchButton =
         <Button inverted color='red' size='small' onClick={this.handleSearchClick}>
             <Button.Content>Search</Button.Content>
         </Button>
@@ -295,26 +336,81 @@ class FlameGraph extends Component {
             }
         ]
 
+        const flavorOptions = [
+            {
+                text: "Standard",
+                value: flameGraphFlavor.standard
+            },
+            {
+                text: "Node.js",
+                value: flameGraphFlavor.nodejs
+            }
+        ]
+
         return (
             <div>
+                <Modal
+                    size='tiny'
+                    open={this.state.settingsOpen}
+                    onClose={this.handleSettingsClose}
+                    closeIcon={false}
+                >
+                    <Modal.Header>
+                        Flame Graph Settings
+                    </Modal.Header>
+                    <Modal.Content>
+                    <Form>
+                      { type == 'nflxprofile' || type == 'cpuprofile' ?
+                          <Form.Field>
+                            <label>Java Package Name</label>
+                            <Checkbox
+                                toggle
+                                checked={this.state.packageName}
+                                onClick={this.handlePackageNameClick}
+                                style={styles.packageNameToggle}
+                            />
+                          </Form.Field>
+                      : null }
+                      <Form.Field>
+                        <label>Layout</label>
+                        <Dropdown selection options={layoutOptions} onChange={this.handleLayoutChange} defaultValue={this.state.layout} />
+                      </Form.Field>
+                      <Form.Field>
+                        <label>FlameGraph Flavor</label>
+                        <Dropdown
+                          selection
+                          style={styles.optionsDropdown}
+                          options={flavorOptions}
+                          onChange={this.handleFlavorChange}
+                          defaultValue={this.state.flavor}
+                          compact />
+                      </Form.Field>
+                    </Form>
+                    </Modal.Content>
+                    <Modal.Actions>
+                        <Button onClick={this.handleCancel}>
+                            Cancel
+                        </Button>
+                        <Button primary onClick={this.handleApply}>
+                            Apply
+                        </Button>
+                    </Modal.Actions>
+                </Modal>
                 <Dimmer page inverted active={this.state.loading}>
                     <Loader size='huge' inverted>Loading</Loader>
-                </Dimmer> 
+                </Dimmer>
                 <Container style={styles.container}>
                     <Grid>
                         <Grid.Column width={4}>
                             <Button content='Back' icon='left arrow' onClick={this.handleBackClick} />
                         </Grid.Column>
                         <Grid.Column width={12} textAlign='right'>
-                            { type == 'nflxprofile' || type == 'cpuprofile' ?
-                                <Checkbox
-                                    toggle
-                                    checked={this.state.packageName}
-                                    onClick={this.handlePackageNameClick}
-                                    label='Java Package Name'
-                                    style={styles.packageNameToggle}
-                                />
-                            : null }
+                            <Button size='small' onClick={this.handleSettingsOpen}>
+                                <Button.Content>
+                                    Options
+                                </Button.Content>
+                            </Button>
+
                             { this.props.compare ?
                                 <Button inverted color='red' size='small' onClick={this.handleFlipClick}>
                                     <Button.Content>
@@ -322,7 +418,6 @@ class FlameGraph extends Component {
                                     </Button.Content>
                                 </Button>
                             : null }
-                            <Dropdown selection style={styles.layoutDropdown} options={layoutOptions} onChange={this.handleLayoutChange} defaultValue={this.state.layout} compact />
                             <Button size='small' onClick={this.handleResetClick}>
                                 <Button.Content>
                                     Reset Zoom
